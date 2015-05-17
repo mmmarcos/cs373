@@ -138,32 +138,77 @@ class matrix:
 ########################################
 
 def calculate(measurements, initial_xy):
-  dt = 0.1
+    dt = 0.1
 
-  x = matrix([[initial_xy[0]], [initial_xy[1]], [0.], [0.]]) # initial state (location and velocity)
-  u = matrix([[0.], [0.], [0.], [0.]]) # external motion
-
-  ### fill this in: ###
-  P =  # initial uncertainty
-  F =  # next state function
-  H =  # measurement function
-  R =  # measurement uncertainty
-  I =  # identity matrix
-
-  def filter(x, P):
-    for n in range(len(measurements)):
-      
-      # prediction
-      x = (F * x) + u
-      P = F * P * F.transpose()
-      
-      # measurement update
-      Z = matrix([measurements[n]])
-      y = Z.transpose() - (H * x)
-      S = H * P * H.transpose() + R
-      K = P * H.transpose() * S.inverse()
-      x = x + (K * y)
-      P = (I - (K * H)) * P
-    return x, P
+    # initial state (location and velocity)
+    x = matrix([[initial_xy[0]], [initial_xy[1]], [0.], [0.]])
     
-  return filter(x, P)
+    # external motion
+    u = matrix([[0.], [0.], [0.], [0.]]) 
+
+    # initial uncertainty
+    P = matrix([[0., 0., 0., 0.],
+                [0., 0., 0., 0.], 
+                [0., 0., 1000., 0.],  
+                [0., 0., 0., 1000.]])
+    
+    # next state function
+    F = matrix([[1., 0., dt, 0.],
+                [0., 1., 0., dt], 
+                [0., 0., 1., 0.],  
+                [0., 0., 0., 1.]])
+
+    # measurement function
+    H = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.]])
+
+    # measurement uncertainty
+    R = matrix([[0.1, 0.], [0., 0.1]])
+
+    # identity matrix
+    I = matrix([[1., 0., 0., 0.],
+                [0., 1., 0., 0.], 
+                [0., 0., 1., 0.],  
+                [0., 0., 0., 1.]])
+    
+
+    def filter(x, P):
+        for n in range(len(measurements)):
+      
+            # prediction
+            x = (F * x) + u
+            P = F * P * F.transpose()
+          
+            # measurement update
+            Z = matrix([measurements[n]])
+            y = Z.transpose() - (H * x)
+            S = H * P * H.transpose() + R
+            K = P * H.transpose() * S.inverse()
+            x = x + (K * y)
+            P = (I - (K * H)) * P
+
+        return x, P
+
+    return filter(x, P)
+
+
+if __name__ == '__main__':
+    print '### 4-dimensional example ###'
+
+    ## 1st example
+    # measurements = [[5., 10.], [6., 8.], [7., 6.], [8., 4.], [9., 2.], [10., 0.]]
+    # initial_xy = [4., 12.]
+
+    ## 2nd example
+    # measurements = [[1., 4.], [6., 0.], [11., -4.], [16., -8.]]
+    # initial_xy = [-4., 8.]
+
+    # 3rd example
+    measurements = [[2., 17.], [0., 15.], [2., 13.], [0., 11.]]
+    initial_xy = [1., 19.]
+
+    x, P = calculate(measurements, initial_xy)
+
+    print 'x='
+    x.show()
+    print 'P='
+    P.show()
