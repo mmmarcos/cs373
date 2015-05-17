@@ -108,7 +108,6 @@ class robot:
         # calculate the correct measurement
         predicted_measurements = self.sense(0)
 
-
         # compute errors
         error = 1.0
         for i in range(len(measurements)):
@@ -131,21 +130,67 @@ class robot:
     # --------
     # move: 
     #   
-    
     # copy your code from the previous exercise
     # and modify it so that it simulates motion noise
     # according to the noise parameters
     #           self.steering_noise
     #           self.distance_noise
+    def move(self, motion):
+
+        # obtain steering angle and distance forward
+        steering = random.gauss(motion[0], self.steering_noise)
+        distance = random.gauss(motion[1], self.distance_noise)
+
+        # compute turning angle
+        turning_angle = distance / self.length * tan(steering)
+
+        if turning_angle < 0.001:
+            # approximate by straight line motion
+            new_x = self.x + (distance * cos(self.orientation))
+            new_y = self.y + (distance * sin(self.orientation))
+            new_orientation = (self.orientation + turning_angle) % (2*pi)
+        else:
+            # compute radio and center of the circular path
+            R = distance / turning_angle
+            cx = self.x - (R*sin(self.orientation))
+            cy = self.y + (R*cos(self.orientation))
+
+            new_x = cx + (R*sin(self.orientation+turning_angle))
+            new_y = cy - (R*cos(self.orientation+turning_angle))
+            new_orientation = (self.orientation + turning_angle) % (2*pi)
+        
+        # copy values to the new robot
+        result = robot()
+        result.length = self.length
+        result.set(new_x, new_y, new_orientation)
+        result.set_noise(self.bearing_noise, self.steering_noise, self.distance_noise)
+
+        return result
+
 
     # --------
     # sense: 
     #    
-
     # copy your code from the previous exercise
     # and modify it so that it simulates bearing noise
     # according to
     #           self.bearing_noise
+    def sense(self, enable_noise = 1):
+        
+        # list of bearing angles to each landmark
+        Z = []
+
+        for lm in landmarks:
+            # compute bearing angle
+            bearing = atan2(lm[0]-self.y, lm[1]-self.x) - self.orientation
+            
+            # add gaussian noise
+            if enable_noise:
+                bearing += random.gauss(0.0, self.bearing_noise)
+            
+            Z.append(bearing % (2*pi))
+
+        return Z
 
     ############## ONLY ADD/MODIFY CODE ABOVE HERE ####################
 
@@ -270,7 +315,3 @@ def particle_filter(motions, measurements, N=500): # I know it's tempting, but d
         p = p3
     
     return get_position(p)
-
-
-
-
