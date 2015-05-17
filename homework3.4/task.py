@@ -94,17 +94,43 @@ class robot:
     # move:
     #   move along a section of a circular path according to motion
     #
-    
-    def move(self, motion): # Do not change the name of this function
+    def move(self, motion): # Do not change the name of this function        
 
-        # ENTER YOUR CODE HERE
+        # obtain steering angle and distance forward
+        steering, distance = motion
+
+        if abs(steering) > max_steering_angle:
+            raise ValueError, "Exceeding max steering angle"
+
+        if distance < 0:
+            raise ValueError, "Backward motion is not allowed"
+
+        # compute turning angle
+        turning_angle = distance / self.length * tan(steering)
+
+        if turning_angle < tolerance:
+            # approximate by straight line motion
+            new_x = self.x + (distance * cos(self.orientation))
+            new_y = self.y + (distance * sin(self.orientation))
+            new_orientation = (self.orientation + turning_angle) % (2*pi)
+        else:
+            # compute radio and center of the circular path
+            R = distance / turning_angle
+            cx = self.x - (R*sin(self.orientation))
+            cy = self.y + (R*cos(self.orientation))
+
+            new_x = cx + (R*sin(self.orientation+turning_angle))
+            new_y = cy - (R*cos(self.orientation+turning_angle))
+            new_orientation = (self.orientation + turning_angle) % (2*pi)
         
+        # copy values to the new robot
+        result = robot()
+        result.length = self.length
+        result.bearing_noise = self.bearing_noise
+        result.steering_noise = self.steering_noise
+        result.distance_noise = self.distance_noise
+        result.set(new_x, new_y, new_orientation)
         return result # make sure your move function returns an instance
                       # of the robot class with the correct coordinates.
                       
     ############## ONLY ADD/MODIFY CODE ABOVE HERE ####################
-        
-
-
-
-
